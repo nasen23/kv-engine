@@ -1,8 +1,8 @@
 // Copyright [2018] Alibaba Cloud All rights reserved
 #ifndef INCLUDE_ENGINE_H_
 #define INCLUDE_ENGINE_H_
-#include <string>
 #include "polar_string.h"
+#include <string>
 
 namespace polar_race {
 
@@ -21,31 +21,27 @@ enum RetCode {
 
 // Pass to Engine::Range for callback
 class Visitor {
- public:
+public:
   virtual ~Visitor() {}
 
   virtual void Visit(const PolarString &key, const PolarString &value) = 0;
 };
 
 class Engine {
- public:
+public:
   // Open engine
-  static RetCode Open(const std::string& name,
-      Engine** eptr);
+  static RetCode Open(const std::string &name, Engine **eptr);
 
-  Engine() { }
+  Engine() {}
 
   // Close engine
   virtual ~Engine();
 
   // Write a key-value pair into engine
-  virtual RetCode Write(const PolarString& key,
-      const PolarString& value) = 0;
+  virtual RetCode Write(const PolarString &key, const PolarString &value) = 0;
 
   // Read value of a key
-  virtual RetCode Read(const PolarString& key,
-      std::string* value) = 0;
-
+  virtual RetCode Read(const PolarString &key, std::string *value) = 0;
 
   /*
    * NOTICE: Implement 'Range' in quarter-final,
@@ -58,11 +54,10 @@ class Engine {
   // upper=="" is treated as a key after all keys in the database.
   // Therefore the following call will traverse the entire database:
   //   Range("", "", visitor)
-  virtual RetCode Range(const PolarString& lower,
-      const PolarString& upper,
-      Visitor &visitor) = 0;
+  virtual RetCode Range(const PolarString &lower, const PolarString &upper,
+                        Visitor &visitor) = 0;
 };
 
-}  // namespace polar_race
+} // namespace polar_race
 
-#endif  // INCLUDE_ENGINE_H_
+#endif // INCLUDE_ENGINE_H_

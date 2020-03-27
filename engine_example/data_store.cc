@@ -1,10 +1,10 @@
 // Copyright [2018] Alibaba Cloud All rights reserved
+#include "data_store.h"
+#include "util.h"
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <vector>
-#include "util.h"
-#include "data_store.h"
 
 namespace polar_race {
 
@@ -17,8 +17,7 @@ static std::string FileName(const std::string &dir, uint32_t fileno) {
 }
 
 RetCode DataStore::Init() {
-  if (!FileExists(dir_)
-      && 0 != mkdir(dir_.c_str(), 0755)) {
+  if (!FileExists(dir_) && 0 != mkdir(dir_.c_str(), 0755)) {
     return kIOError;
   }
 
@@ -56,7 +55,7 @@ RetCode DataStore::Init() {
   return OpenCurFile();
 }
 
-RetCode DataStore::Append(const std::string& value, Location* location) {
+RetCode DataStore::Append(const std::string &value, Location *location) {
   if (value.size() > kSingleFileSize) {
     return kInvalidArgument;
   }
@@ -81,22 +80,22 @@ RetCode DataStore::Append(const std::string& value, Location* location) {
   return kSucc;
 }
 
-RetCode DataStore::Read(const Location& l, std::string* value) {
+RetCode DataStore::Read(const Location &l, std::string *value) {
   int fd = open(FileName(dir_, l.file_no).c_str(), O_RDONLY, 0644);
   if (fd < 0) {
     return kIOError;
   }
   lseek(fd, l.offset, SEEK_SET);
 
-  char* buf = new char[l.len]();
-  char* pos = buf;
+  char *buf = new char[l.len]();
+  char *pos = buf;
   uint32_t value_len = l.len;
 
   while (value_len > 0) {
     ssize_t r = read(fd, pos, value_len);
     if (r < 0) {
       if (errno == EINTR) {
-        continue;  // Retry
+        continue; // Retry
       }
       close(fd);
       return kIOError;
@@ -121,4 +120,4 @@ RetCode DataStore::OpenCurFile() {
   return kSucc;
 }
 
-}  // namespace polar_race
+} // namespace polar_race

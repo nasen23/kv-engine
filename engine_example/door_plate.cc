@@ -1,14 +1,14 @@
 // Copyright [2018] Alibaba Cloud All rights reserved
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <map>
-#include <cstring>
-#include <iostream>
-#include <utility>
-#include "util.h"
 #include "door_plate.h"
+#include "util.h"
+#include <cstring>
+#include <fcntl.h>
+#include <iostream>
+#include <map>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <utility>
 
 namespace polar_race {
 
@@ -16,34 +16,30 @@ static const uint32_t kMaxDoorCnt = 1024 * 1024 * 32;
 static const char kMetaFileName[] = "META";
 static const int kMaxRangeBufCount = kMaxDoorCnt;
 
-static bool ItemKeyMatch(const Item &item, const std::string& target) {
-  if (target.size() != item.key_size
-      || memcmp(item.key, target.data(), item.key_size) != 0) {
+static bool ItemKeyMatch(const Item &item, const std::string &target) {
+  if (target.size() != item.key_size ||
+      memcmp(item.key, target.data(), item.key_size) != 0) {
     // Conflict
     return false;
   }
   return true;
 }
 
-static bool ItemTryPlace(const Item &item, const std::string& target) {
+static bool ItemTryPlace(const Item &item, const std::string &target) {
   if (item.in_use == 0) {
     return true;
   }
   return ItemKeyMatch(item, target);
 }
 
-DoorPlate::DoorPlate(const std::string& path)
-  : dir_(path),
-  fd_(-1),
-  items_(NULL) {
-  }
+DoorPlate::DoorPlate(const std::string &path)
+    : dir_(path), fd_(-1), items_(NULL) {}
 
 RetCode DoorPlate::Init() {
   bool new_create = false;
   const int map_size = kMaxDoorCnt * sizeof(Item);
 
-  if (!FileExists(dir_)
-      && 0 != mkdir(dir_.c_str(), 0755)) {
+  if (!FileExists(dir_) && 0 != mkdir(dir_.c_str(), 0755)) {
     return kIOError;
   }
 
@@ -66,8 +62,7 @@ RetCode DoorPlate::Init() {
   }
   fd_ = fd;
 
-  void* ptr = mmap(NULL, map_size, PROT_READ | PROT_WRITE,
-      MAP_SHARED, fd_, 0);
+  void *ptr = mmap(NULL, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
   if (ptr == MAP_FAILED) {
     std::cerr << "MAP_FAILED: " << strerror(errno) << std::endl;
     close(fd);
@@ -77,7 +72,7 @@ RetCode DoorPlate::Init() {
     memset(ptr, 0, map_size);
   }
 
-  items_ = reinterpret_cast<Item*>(ptr);
+  items_ = reinterpret_cast<Item *>(ptr);
   return kSucc;
 }
 
@@ -90,11 +85,10 @@ DoorPlate::~DoorPlate() {
 }
 
 // Very easy hash table, which deal conflict only by try the next one
-int DoorPlate::CalcIndex(const std::string& key) {
+int DoorPlate::CalcIndex(const std::string &key) {
   uint32_t jcnt = 0;
   int index = StrHash(key.data(), key.size()) % kMaxDoorCnt;
-  while (!ItemTryPlace(*(items_ + index), key)
-      && ++jcnt < kMaxDoorCnt) {
+  while (!ItemTryPlace(*(items_ + index), key) && ++jcnt < kMaxDoorCnt) {
     index = (index + 1) % kMaxDoorCnt;
   }
 
@@ -105,7 +99,7 @@ int DoorPlate::CalcIndex(const std::string& key) {
   return index;
 }
 
-RetCode DoorPlate::AddOrUpdate(const std::string& key, const Location& l) {
+RetCode DoorPlate::AddOrUpdate(const std::string &key, const Location &l) {
   if (key.size() > kMaxKeyLen) {
     return kInvalidArgument;
   }
@@ -115,21 +109,20 @@ RetCode DoorPlate::AddOrUpdate(const std::string& key, const Location& l) {
     return kFull;
   }
 
-  Item* iptr = items_ + index;
+  Item *iptr = items_ + index;
   if (iptr->in_use == 0) {
     // new item
     memcpy(iptr->key, key.data(), key.size());
     iptr->key_size = key.size();
-    iptr->in_use = 1;  // Place
+    iptr->in_use = 1; // Place
   }
   iptr->location = l;
   return kSucc;
 }
 
-RetCode DoorPlate::Find(const std::string& key, Location *location) {
+RetCode DoorPlate::Find(const std::string &key, Location *location) {
   int index = CalcIndex(key);
-  if (index < 0
-      || !ItemKeyMatch(*(items_ + index), key)) {
+  if (index < 0 || !ItemKeyMatch(*(items_ + index), key)) {
     return kNotFound;
   }
 
@@ -137,17 +130,16 @@ RetCode DoorPlate::Find(const std::string& key, Location *location) {
   return kSucc;
 }
 
-RetCode DoorPlate::GetRangeLocation(const std::string& lower,
-    const std::string& upper,
-    std::map<std::string, Location> *locations) {
+RetCode
+DoorPlate::GetRangeLocation(const std::string &lower, const std::string &upper,
+                            std::map<std::string, Location> *locations) {
   int count = 0;
   for (Item *it = items_ + kMaxDoorCnt - 1; it >= items_; it--) {
     if (!it->in_use) {
       continue;
     }
     std::string key(it->key, it->key_size);
-    if ((key >= lower || lower.empty())
-        && (key < upper || upper.empty())) {
+    if ((key >= lower || lower.empty()) && (key < upper || upper.empty())) {
       locations->insert(std::pair<std::string, Location>(key, it->location));
       if (++count > kMaxRangeBufCount) {
         return kOutOfMemory;
@@ -157,4 +149,4 @@ RetCode DoorPlate::GetRangeLocation(const std::string& lower,
   return kSucc;
 }
 
-}  // namespace polar_race
+} // namespace polar_race

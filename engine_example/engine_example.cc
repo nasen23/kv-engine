@@ -1,23 +1,22 @@
 // Copyright [2018] Alibaba Cloud All rights reserved
+#include "engine_example.h"
+#include "util.h"
 #include <fcntl.h>
+#include <map>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <map>
-#include "util.h"
-#include "engine_example.h"
 
 namespace polar_race {
 
 static const char kLockFile[] = "LOCK";
 
-RetCode Engine::Open(const std::string& name, Engine** eptr) {
+RetCode Engine::Open(const std::string &name, Engine **eptr) {
   return EngineExample::Open(name, eptr);
 }
 
-Engine::~Engine() {
-}
+Engine::~Engine() {}
 
-RetCode EngineExample::Open(const std::string& name, Engine** eptr) {
+RetCode EngineExample::Open(const std::string &name, Engine **eptr) {
   *eptr = NULL;
   EngineExample *engine_example = new EngineExample(name);
 
@@ -47,7 +46,7 @@ EngineExample::~EngineExample() {
   }
 }
 
-RetCode EngineExample::Write(const PolarString& key, const PolarString& value) {
+RetCode EngineExample::Write(const PolarString &key, const PolarString &value) {
   pthread_mutex_lock(&mu_);
   Location location;
   RetCode ret = store_.Append(value.ToString(), &location);
@@ -58,7 +57,7 @@ RetCode EngineExample::Write(const PolarString& key, const PolarString& value) {
   return ret;
 }
 
-RetCode EngineExample::Read(const PolarString& key, std::string* value) {
+RetCode EngineExample::Read(const PolarString &key, std::string *value) {
   pthread_mutex_lock(&mu_);
   Location location;
   RetCode ret = plate_.Find(key.ToString(), &location);
@@ -70,18 +69,19 @@ RetCode EngineExample::Read(const PolarString& key, std::string* value) {
   return ret;
 }
 
-RetCode EngineExample::Range(const PolarString& lower, const PolarString& upper,
-    Visitor &visitor) {
+RetCode EngineExample::Range(const PolarString &lower, const PolarString &upper,
+                             Visitor &visitor) {
   pthread_mutex_lock(&mu_);
   std::map<std::string, Location> locations;
-  RetCode ret =  plate_.GetRangeLocation(lower.ToString(), upper.ToString(), &locations);
+  RetCode ret =
+      plate_.GetRangeLocation(lower.ToString(), upper.ToString(), &locations);
   if (ret != kSucc) {
     pthread_mutex_unlock(&mu_);
     return ret;
   }
 
   std::string value;
-  for (auto& pair : locations) {
+  for (auto &pair : locations) {
     ret = store_.Read(pair.second, &value);
     if (kSucc != ret) {
       break;
@@ -92,5 +92,4 @@ RetCode EngineExample::Range(const PolarString& lower, const PolarString& upper,
   return ret;
 }
 
-}  // namespace polar_race
-
+} // namespace polar_race
