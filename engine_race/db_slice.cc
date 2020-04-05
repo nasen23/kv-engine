@@ -28,6 +28,7 @@ DbSlice::DbSlice(const std::string &dir, int id)
 
   meta_map = reinterpret_cast<uint32_t *>(
       mmap(nullptr, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, meta_fd, 0));
+  assert(meta_map != MAP_FAILED);
 
   if (new_db) {
     gen = 0;
@@ -101,6 +102,7 @@ int DbSlice::open_new_datafile(uint32_t gen) {
 void DbSlice::map_gen_data(uint32_t gen) {
   void *data_map = mmap(nullptr, FILE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
                         gen_fd[gen], 0);
+  assert(data_map != MAP_FAILED);
   madvise(data_map, FILE_SIZE, MADV_SEQUENTIAL);
   gen_map[gen] = reinterpret_cast<char *>(data_map);
 }
