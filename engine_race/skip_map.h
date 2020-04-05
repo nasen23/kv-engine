@@ -10,7 +10,7 @@ namespace polar_race {
 
 const static int KEY_MAX_LENGTH = 32;
 const static int SKIPLIST_MAX_LEVEL = 18;
-const static int INDEX_FILE_SIZE = 8 * 1024 * 1024;
+const static int INDEX_FILE_SIZE = 16 * 1024 * 1024;
 
 struct Location {
   int32_t gen;

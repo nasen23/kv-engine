@@ -18,8 +18,7 @@ inline int fstrcmp(const char *a, const char *b) {
   } else if (res > 0) {
     return 1;
   }
-  auto forward = sizeof(int64_t) / sizeof(char);
-  return strcmp(a + forward, b + forward);
+  return strcmp(a, b);
 }
 
 SkipMap::SkipMap(const std::string name) : generator(rd()) {
@@ -141,13 +140,13 @@ void SkipMap::insert(const PolarString &key, Location loc) {
 }
 
 inline uint32_t SkipMap::rand_level() {
-  std::uniform_int_distribution<int> gen_level(1, SKIPLIST_MAX_LEVEL);
+  std::uniform_int_distribution<int> gen_level(1, SKIPLIST_MAX_LEVEL - 1);
   uint32_t level = gen_level(generator);
   return level;
 }
 
 inline uint32_t SkipMap::alloc_node() {
-  if (__glibc_unlikely(*len + 1 >= cap)) {
+  if (__glibc_unlikely(*len >= cap)) {
     ftruncate(fd, fsize * 2);
     fmap = mremap(fmap, fsize, fsize * 2, MREMAP_MAYMOVE);
     fsize *= 2;
