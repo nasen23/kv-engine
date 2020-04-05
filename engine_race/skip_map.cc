@@ -24,6 +24,7 @@ inline int fstrcmp(const char *a, const char *b) {
 SkipMap::SkipMap(const std::string name) : generator(rd()) {
   struct stat st = {};
   fd = open(name.c_str(), O_RDWR | O_CREAT, 0644);
+  assert(fd > 0);
   fstat(fd, &st);
   fsize = (size_t)st.st_size;
 
@@ -39,6 +40,7 @@ SkipMap::SkipMap(const std::string name) : generator(rd()) {
       (uint32_t)(map_size - 2 * sizeof(uint32_t) - sizeof(Item)) / sizeof(Item);
 
   fmap = mmap(nullptr, map_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  assert(fmap != MAP_FAILED);
   map_file();
 
   if (init) {
@@ -146,9 +148,10 @@ inline uint32_t SkipMap::rand_level() {
 }
 
 inline uint32_t SkipMap::alloc_node() {
-  if (__glibc_unlikely(*len >= cap)) {
+  if (__glibc_unlikely(*len + 1 >= cap)) {
     ftruncate(fd, fsize * 2);
     fmap = mremap(fmap, fsize, fsize * 2, MREMAP_MAYMOVE);
+    assert(fmap != MAP_FAILED);
     fsize *= 2;
     cap =
         (uint32_t)(fsize - 2 * sizeof(uint32_t) - sizeof(Item)) / sizeof(Item);
