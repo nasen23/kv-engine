@@ -15,24 +15,33 @@ Engine::~Engine() {}
 
 // 1. Open engine
 RetCode EngineRace::Open(const std::string &name, Engine **eptr) {
-  *eptr = NULL;
-  EngineRace *engine_race = new EngineRace(name);
-
-  *eptr = engine_race;
+  *eptr = new EngineRace(name);
   return kSucc;
 }
 
+EngineRace::EngineRace(const std::string &dir) {
+  for (int i = 0; i < DATABASE_SLICE_COUNT; i++) {
+    db_slices[i] = new DbSlice(dir, i);
+  }
+}
+
 // 2. Close engine
-EngineRace::~EngineRace() {}
+EngineRace::~EngineRace() {
+  for (int i = 0; i < DATABASE_SLICE_COUNT; i++) {
+    delete db_slices[i];
+  }
+}
 
 // 3. Write a key-value pair into engine
 RetCode EngineRace::Write(const PolarString &key, const PolarString &value) {
-  return kSucc;
+  auto id = (uint8_t)key.data()[0];
+  return db_slices[id]->write(key, value);
 }
 
 // 4. Read value of a key
 RetCode EngineRace::Read(const PolarString &key, std::string *value) {
-  return kSucc;
+  auto id = (uint8_t)key.data()[0];
+  return db_slices[id]->read(key, value);
 }
 
 /*
@@ -48,7 +57,7 @@ RetCode EngineRace::Read(const PolarString &key, std::string *value) {
 //   Range("", "", visitor)
 RetCode EngineRace::Range(const PolarString &lower, const PolarString &upper,
                           Visitor &visitor) {
-  return kSucc;
+  return kNotSupported;
 }
 
 } // namespace polar_race
