@@ -34,13 +34,13 @@ EngineRace::~EngineRace() {
 
 // 3. Write a key-value pair into engine
 RetCode EngineRace::Write(const PolarString &key, const PolarString &value) {
-  auto id = (uint8_t)key.data()[0];
+  uint8_t id = (uint8_t)key.data()[0];
   return db_slices[id]->write(key, value);
 }
 
 // 4. Read value of a key
 RetCode EngineRace::Read(const PolarString &key, std::string *value) {
-  auto id = (uint8_t)key.data()[0];
+  uint8_t id = (uint8_t)key.data()[0];
   return db_slices[id]->read(key, value);
 }
 
