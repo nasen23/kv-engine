@@ -3,6 +3,7 @@
 test=('single_thread_test.cc' 'multi_thread_test.cc' 'crash_test.cc')
 
 rm -rf ./data/test-*
+mkdir -p data
 for f in ${test[@]}; do
     exe=$(echo $f | cut -d . -f1)
     echo $f
